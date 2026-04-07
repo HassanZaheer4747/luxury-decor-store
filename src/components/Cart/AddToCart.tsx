@@ -8,6 +8,7 @@ import clsx from 'clsx'
 import { useSearchParams } from 'next/navigation'
 import React, { useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
+import { useKiSpark } from '@/components/Header/index.client'
 type Props = {
   product: Product
 }
@@ -15,6 +16,7 @@ type Props = {
 export function AddToCart({ product }: Props) {
   const { addItem, cart, isLoading } = useCart()
   const searchParams = useSearchParams()
+  const { triggerSpark, SparkLayer } = useKiSpark()
 
   const variants = product.variants?.docs || []
 
@@ -38,8 +40,9 @@ export function AddToCart({ product }: Props) {
   }, [product.enableVariants, searchParams, variants])
 
   const addToCart = useCallback(
-    (e: React.FormEvent<HTMLButtonElement>) => {
+    (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault()
+      triggerSpark(e)
 
       addItem({
         product: product.id,
@@ -48,64 +51,33 @@ export function AddToCart({ product }: Props) {
         toast.success('Item added to cart.')
       })
     },
-    [addItem, product, selectedVariant],
+    [addItem, product, selectedVariant, triggerSpark],
   )
 
   const disabled = useMemo<boolean>(() => {
-    const existingItem = cart?.items?.find((item) => {
-      const productID = typeof item.product === 'object' ? item.product?.id : item.product
-      const variantID = item.variant
-        ? typeof item.variant === 'object'
-          ? item.variant?.id
-          : item.variant
-        : undefined
-
-      if (productID === product.id) {
-        if (product.enableVariants) {
-          return variantID === selectedVariant?.id
-        }
-        return true
-      }
-    })
-
-    if (existingItem) {
-      const existingQuantity = existingItem.quantity
-
-      if (product.enableVariants) {
-        return existingQuantity >= (selectedVariant?.inventory || 0)
-      }
-      return existingQuantity >= (product.inventory || 0)
-    }
-
     if (product.enableVariants) {
       if (!selectedVariant) {
         return true
       }
-
-      if (selectedVariant.inventory === 0) {
-        return true
-      }
-    } else {
-      if (product.inventory === 0) {
-        return true
-      }
     }
-
     return false
-  }, [selectedVariant, cart?.items, product])
+  }, [selectedVariant, product])
 
   return (
-    <Button
-      aria-label="Add to cart"
-      variant={'outline'}
-      className={clsx({
-        'hover:opacity-90': true,
-      })}
-      disabled={disabled || isLoading}
-      onClick={addToCart}
-      type="submit"
-    >
-      Add To Cart
-    </Button>
+    <>
+      <SparkLayer />
+      <Button
+        aria-label="Add to cart"
+        variant={'outline'}
+        className={clsx({
+          'hover:opacity-90': true,
+        })}
+        disabled={disabled || isLoading}
+        onClick={addToCart}
+        type="submit"
+      >
+        Add To Cart
+      </Button>
+    </>
   )
 }

@@ -1,66 +1,71 @@
-import type { Footer } from '@/payload-types'
-
-import { FooterMenu } from '@/components/Footer/menu'
-import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 import Link from 'next/link'
-import React, { Suspense } from 'react'
-import { LogoIcon } from '@/components/icons/logo'
-
-const { COMPANY_NAME, SITE_NAME } = process.env
+import React from 'react'
+import type { Footer as FooterType } from '@/payload-types'
 
 export async function Footer() {
-  const footer: Footer = await getCachedGlobal('footer', 1)()
-  const menu = footer.navItems || []
-  const currentYear = new Date().getFullYear()
-  const copyrightDate = 2023 + (currentYear > 2023 ? `-${currentYear}` : '')
-  const skeleton = 'w-full h-6 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700'
-
-  const copyrightName = COMPANY_NAME || SITE_NAME || ''
+  const footerData: FooterType = await getCachedGlobal('footer', 1)()
+  const navItems = footerData?.navItems || []
 
   return (
-    <footer className="text-sm text-neutral-500 dark:text-neutral-400">
-      <div className="container">
-        <div className="flex w-full flex-col gap-6 border-t border-neutral-200 py-12 text-sm md:flex-row md:gap-12 dark:border-neutral-700">
-          <div>
-            <Link className="flex items-center gap-2 text-black md:pt-1 dark:text-white" href="/">
-              <LogoIcon className="w-6" />
-              <span className="sr-only">{SITE_NAME}</span>
-            </Link>
-          </div>
-          <Suspense
-            fallback={
-              <div className="flex h-[188px] w-[200px] flex-col gap-2">
-                <div className={skeleton} />
-                <div className={skeleton} />
-                <div className={skeleton} />
-                <div className={skeleton} />
-                <div className={skeleton} />
-                <div className={skeleton} />
-              </div>
-            }
-          >
-            <FooterMenu menu={menu} />
-          </Suspense>
-          <div className="md:ml-auto flex flex-col gap-4 items-end">
-            <ThemeSelector />
+    <footer className="w-full bg-black border-t border-white/[0.08] text-white py-16 px-6">
+      <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 text-sm font-light">
+        
+        {/* Col 1: Heritage */}
+        <div className="flex flex-col gap-4">
+          <Link href="/" className="text-xl font-light tracking-[0.35em] uppercase" style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}>
+            Roshane
+          </Link>
+          <p className="text-white/40 max-w-[200px] leading-relaxed tracking-wider">
+            Architectural elements for modern living.
+          </p>
+        </div>
+
+        {/* Col 2: Navigation */}
+        <div className="flex flex-col gap-3">
+          <p className="text-[10px] tracking-[0.2em] text-white/30 uppercase mb-2">Explore</p>
+          <Link href="/atelier" className="text-white/60 hover:text-white transition-colors uppercase tracking-[0.15em] text-xs">Atelier</Link>
+          <Link href="/collections" className="text-white/60 hover:text-white transition-colors uppercase tracking-[0.15em] text-xs">Collections</Link>
+          <Link href="/bespoke" className="text-white/60 hover:text-white transition-colors uppercase tracking-[0.15em] text-xs">Bespoke</Link>
+          {navItems
+            .filter((item) => {
+              if (item.link?.label && item.link.label.toLowerCase() === 'admin') return false
+              return true
+            })
+            .map((item, index) => {
+              if (typeof item.link === 'object' && item.link.url) {
+                return (
+                  <Link key={index} href={item.link.url} className="text-white/60 hover:text-white transition-colors uppercase tracking-[0.15em] text-xs">
+                    {item.link.label}
+                  </Link>
+                )
+              }
+              return null
+          })}
+        </div>
+
+        {/* Col 3: Newsletter */}
+        <div className="flex flex-col gap-3 md:items-end">
+          <div className="w-full md:w-auto">
+            <p className="text-[10px] tracking-[0.2em] text-white/30 uppercase mb-4 md:text-right font-light">Join the Private List</p>
+            <div className="flex items-center group">
+              <input 
+                type="email" 
+                placeholder="YOUR EMAIL" 
+                className="bg-transparent border-none border-b border-white/20 focus:border-white outline-none pb-1 text-[11px] tracking-[0.15em] uppercase text-white placeholder:text-white/20 w-[180px] transition-colors duration-300"
+                suppressHydrationWarning
+              />
+              <button type="button" className="text-[10px] font-light uppercase tracking-[0.2em] hover:text-[#c9a84c] border-b border-white/0 hover:border-[#c9a84c] pb-1 transition-all duration-300 ml-4" suppressHydrationWarning>
+                Submit
+              </button>
+            </div>
           </div>
         </div>
+
       </div>
-      <div className="border-t border-neutral-200 py-6 text-sm dark:border-neutral-700">
-        <div className="container mx-auto flex w-full flex-col items-center gap-1 md:flex-row md:gap-0">
-          <p>
-            &copy; {copyrightDate} {copyrightName}
-            {copyrightName.length && !copyrightName.endsWith('.') ? '.' : ''} All rights reserved.
-          </p>
-          <hr className="mx-4 hidden h-4 w-px border-l border-neutral-400 md:inline-block" />
-          <p>Designed in Michigan</p>
-          <p className="md:ml-auto">
-            <a className="text-black dark:text-white" href="https://payloadcms.com">
-              Crafted by Payload
-            </a>
-          </p>
-        </div>
+
+      <div className="container mx-auto mt-16 pt-8 border-t border-white/[0.04] flex flex-col items-center justify-center text-[10px] text-white/20 tracking-[0.2em] uppercase">
+        <p>© 2026 ROSHANE. All Rights Reserved.</p>
       </div>
     </footer>
   )
