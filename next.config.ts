@@ -11,6 +11,8 @@ const NEXT_PUBLIC_SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://loc
 
 const nextConfig: NextConfig = {
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 31536000,
     localPatterns: [
       {
         pathname: '/api/media/file/**',
@@ -19,7 +21,7 @@ const nextConfig: NextConfig = {
         pathname: '/assets/images/**',
       },
     ],
-    qualities: [90, 100],
+    qualities: [75, 85, 95],
     remotePatterns: [
       ...[NEXT_PUBLIC_SERVER_URL /* 'https://example.com' */].map((item) => {
         const url = new URL(item)

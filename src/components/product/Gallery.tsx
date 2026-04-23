@@ -20,12 +20,6 @@ export const Gallery: React.FC<Props> = ({ gallery }) => {
   const [api, setApi] = React.useState<CarouselApi>()
 
   useEffect(() => {
-    if (!api) {
-      return
-    }
-  }, [api])
-
-  useEffect(() => {
     const values = Array.from(searchParams.values())
 
     if (values && api) {

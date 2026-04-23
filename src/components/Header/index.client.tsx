@@ -20,7 +20,7 @@ function LuxuryCursor() {
   const ringRef = useRef<HTMLDivElement>(null)
   const mouse = useRef({ x: 0, y: 0 })
   const pos = useRef({ x: 0, y: 0 })
-  const [hovering, setHovering] = useState(false)
+  const hovering = useRef(false)
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -28,12 +28,17 @@ function LuxuryCursor() {
     }
     const onOver = (e: MouseEvent) => {
       const t = e.target as HTMLElement
-      if (t.closest('[data-cursor-grow]') || t.closest('a') || t.closest('button')) setHovering(true)
+      if (t.closest('[data-cursor-grow]') || t.closest('a') || t.closest('button')) {
+        hovering.current = true
+        if (ringRef.current) ringRef.current.style.background = 'rgba(255,255,255,0.06)'
+      }
     }
     const onOut = (e: MouseEvent) => {
       const t = e.target as HTMLElement
-      if (t.closest('[data-cursor-grow]') || t.closest('a') || t.closest('button'))
-        setHovering(false)
+      if (t.closest('[data-cursor-grow]') || t.closest('a') || t.closest('button')) {
+        hovering.current = false
+        if (ringRef.current) ringRef.current.style.background = 'transparent'
+      }
     }
 
     window.addEventListener('mousemove', onMove)
@@ -47,7 +52,7 @@ function LuxuryCursor() {
       if (dotRef.current)
         dotRef.current.style.transform = `translate(${mouse.current.x - 4}px,${mouse.current.y - 4}px)`
       if (ringRef.current)
-        ringRef.current.style.transform = `translate(${pos.current.x - 24}px,${pos.current.y - 24}px) scale(${hovering ? 2.2 : 1})`
+        ringRef.current.style.transform = `translate(${pos.current.x - 24}px,${pos.current.y - 24}px) scale(${hovering.current ? 2.2 : 1})`
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -58,7 +63,7 @@ function LuxuryCursor() {
       document.removeEventListener('mouseout', onOut)
       cancelAnimationFrame(raf)
     }
-  }, [hovering])
+  }, [])
 
   return (
     <>
@@ -82,7 +87,7 @@ function LuxuryCursor() {
           height: 48,
           borderRadius: '50%',
           border: '1.5px solid rgba(255,255,255,0.5)',
-          background: hovering ? 'rgba(255,255,255,0.06)' : 'transparent',
+          background: 'transparent',
           mixBlendMode: 'difference',
           transition: 'transform 0.25s cubic-bezier(.23,1,.32,1), background 0.3s ease',
           willChange: 'transform',
@@ -115,25 +120,22 @@ export function RoshaneHeader({ header }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   /* ── Cart count from Payload ── */
-  let totalQuantity: number | undefined
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { cart } = useCart()
-    totalQuantity =
-      cart?.items?.reduce(
-        (q: number, item: { quantity?: number }) => (item.quantity || 0) + q,
-        0,
-      ) || undefined
-  } catch {
-    /* Cart provider not available */
-  }
+  const { cart } = useCart()
+  const totalQuantity =
+    cart?.items?.reduce(
+      (q: number, item: { quantity?: number }) => (item.quantity || 0) + q,
+      0,
+    ) || undefined
 
   /* ── Ki Blast ── */
   const spawnBlast = useCallback((e: React.MouseEvent) => {
     const id = Date.now() + Math.random()
     setBlasts((prev) => [...prev, { id, x: e.clientX, y: e.clientY }])
-    setIsShaking(true)
-    setTimeout(() => setIsShaking(false), 300)
+    
+    /* Optimized: removing shake animation to prevent layout thrashing during navigation */
+    // setIsShaking(true)
+    // setTimeout(() => setIsShaking(false), 300)
+    
     setTimeout(() => setBlasts((prev) => prev.filter((b) => b.id !== id)), 600)
   }, [])
 
@@ -308,16 +310,8 @@ export function RoshaneHeader({ header }: Props) {
 
 /* ─────────── Reusable Ki Spark (for Add-to-Cart etc.) ─────────── */
 
-export function useKiSpark() {
-  const [sparks, setSparks] = useState<KiBlast[]>([])
-
-  const triggerSpark = useCallback((e: React.MouseEvent) => {
-    const id = Date.now() + Math.random()
-    setSparks((prev) => [...prev, { id, x: e.clientX, y: e.clientY }])
-    setTimeout(() => setSparks((prev) => prev.filter((s) => s.id !== id)), 500)
-  }, [])
-
-  const SparkLayer = () => (
+function SparkLayerComponent({ sparks }: { sparks: KiBlast[] }) {
+  return (
     <div className="fixed inset-0 pointer-events-none z-[9998]">
       <AnimatePresence>
         {sparks.map((s) => (
@@ -341,6 +335,18 @@ export function useKiSpark() {
       </AnimatePresence>
     </div>
   )
+}
+
+export function useKiSpark() {
+  const [sparks, setSparks] = useState<KiBlast[]>([])
+
+  const triggerSpark = useCallback((e: React.MouseEvent) => {
+    const id = Date.now() + Math.random()
+    setSparks((prev) => [...prev, { id, x: e.clientX, y: e.clientY }])
+    setTimeout(() => setSparks((prev) => prev.filter((s) => s.id !== id)), 500)
+  }, [])
+
+  const SparkLayer = useCallback(() => <SparkLayerComponent sparks={sparks} />, [sparks])
 
   return { triggerSpark, SparkLayer }
 }

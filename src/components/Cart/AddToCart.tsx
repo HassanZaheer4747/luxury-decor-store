@@ -43,12 +43,13 @@ export function AddToCart({ product }: Props) {
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault()
       triggerSpark(e)
+      toast.success('Item added to cart.')
 
       addItem({
         product: product.id,
         variant: selectedVariant?.id ?? undefined,
-      }).then(() => {
-        toast.success('Item added to cart.')
+      }).catch(() => {
+        toast.error('Failed to add item to cart.')
       })
     },
     [addItem, product, selectedVariant, triggerSpark],

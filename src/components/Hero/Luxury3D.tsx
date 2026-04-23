@@ -18,7 +18,6 @@ import * as THREE from 'three'
 import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib.js'
 
 gsap.registerPlugin(ScrollTrigger)
-RectAreaLightUniformsLib.init()
 
 /* ═══════════ Responsive Hook ═══════════ */
 
@@ -259,21 +258,26 @@ export function Luxury3D() {
   const [inView, setInView] = useState(true)
 
   useEffect(() => {
+    // Initialize RectAreaLights only once
+    RectAreaLightUniformsLib.init()
+
     // 1. Viewport Smart-Pausing
     const observer = new IntersectionObserver(
       ([entry]) => setInView(entry.isIntersecting),
-      { rootMargin: '100px 0px' }
+      { rootMargin: '200px 0px' } // Increased margin for smoother activation
     )
     if (sectionRef.current) observer.observe(sectionRef.current)
 
-    // 2. GSAP Fade
+    // 2. GSAP Fade — Use 'to' with an explicit initial state for better reliability
     const ctx = gsap.context(() => {
-      gsap.from(sectionRef.current, {
-        opacity: 0,
+      gsap.to(sectionRef.current, {
+        opacity: 1,
+        duration: 1.5,
+        ease: 'power2.out',
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: 'top 85%',
-          end: 'top 35%',
+          start: 'top 95%', // Earlier start
+          end: 'top 40%',
           scrub: true,
         },
       })
@@ -288,7 +292,7 @@ export function Luxury3D() {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full h-screen overflow-hidden bg-black mt-[-1px]"
+      className="relative w-full h-screen overflow-hidden bg-black mt-[-1px] opacity-0 transition-opacity duration-700"
     >
       {/* Top fade — blends seamlessly from hero's black */}
       <div
@@ -304,7 +308,7 @@ export function Luxury3D() {
         <ErrorBoundary>
         <Canvas
           frameloop={inView ? 'always' : 'demand'}
-          gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+          gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
           style={{ width: '100%', height: '100%' }}
         >
             <Suspense fallback={null}>

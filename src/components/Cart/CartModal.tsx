@@ -105,8 +105,9 @@ export function CartModal() {
                     }
                   }
 
+                  const itemKey = `${typeof product === 'object' ? product.id : product}-${typeof variant === 'object' ? variant?.id : variant ?? 'no-variant'}`
                   return (
-                    <li className="flex w-full flex-col" key={i}>
+                    <li className="flex w-full flex-col" key={itemKey}>
                       <div className="relative flex w-full flex-row justify-between px-1 py-4">
                         <div className="absolute z-40 -mt-2 ml-[55px]">
                           <DeleteItemButton item={item} />
@@ -121,6 +122,8 @@ export function CartModal() {
                                 alt={image?.alt || product?.title || ''}
                                 className="h-full w-full object-cover"
                                 height={94}
+                                loading="lazy"
+                                quality={75}
                                 src={image.url}
                                 width={94}
                               />

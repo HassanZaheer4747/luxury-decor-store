@@ -1,5 +1,8 @@
 import type { Media, Product } from '@/payload-types'
 
+export const revalidate = 3600
+export const dynamicParams = true
+
 import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { GridTileImage } from '@/components/Grid/tile'
 import { Gallery } from '@/components/product/Gallery'
@@ -9,7 +12,7 @@ import { getPayload } from 'payload'
 import { draftMode } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import React, { Suspense } from 'react'
+import React, { Suspense, cache } from 'react'
 import { Button } from '@/components/ui/button'
 import { ChevronLeftIcon } from 'lucide-react'
 import { Metadata } from 'next'
@@ -18,6 +21,20 @@ type Args = {
   params: Promise<{
     slug: string
   }>
+}
+
+export async function generateStaticParams() {
+  const payload = await (await import('payload')).getPayload({ config: configPromise })
+  const products = await payload.find({
+    collection: 'products',
+    draft: false,
+    limit: 1000,
+    overrideAccess: false,
+    pagination: false,
+    select: { slug: true },
+    where: { _status: { equals: 'published' } },
+  })
+  return products.docs.map(({ slug }) => ({ slug }))
 }
 
 export async function generateMetadata({ params }: Args): Promise<Metadata> {
@@ -111,12 +128,14 @@ export default async function ProductPage({ params }: Args) {
 
   return (
     <React.Fragment>
-      <script
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(productJsonLd),
-        }}
-        type="application/ld+json"
-      />
+      <section>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(productJsonLd),
+          }}
+          type="application/ld+json"
+        />
+      </section>
       <div className="container pt-8 pb-8">
         <Button asChild variant="ghost" className="mb-4">
           <Link href="/shop">
@@ -182,14 +201,13 @@ function RelatedProducts({ products }: { products: Product[] }) {
   )
 }
 
-const queryProductBySlug = async ({ slug }: { slug: string }) => {
+const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
   const { isEnabled: draft } = await draftMode()
 
   const payload = await getPayload({ config: configPromise })
-
   const result = await payload.find({
     collection: 'products',
-    depth: 3,
+    depth: 2,
     draft,
     limit: 1,
     overrideAccess: draft,
@@ -204,15 +222,23 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
         ...(draft ? [] : [{ _status: { equals: 'published' } }]),
       ],
     },
-    populate: {
-      variants: {
-        title: true,
-        priceInUSD: true,
-        inventory: true,
-        options: true,
-      },
+    select: {
+      title: true,
+      slug: true,
+      description: true,
+      gallery: true,
+      variants: true,
+      enableVariants: true,
+      inventory: true,
+      priceInUSD: true,
+      relatedProducts: true,
+      layout: true,
+      meta: true,
+      _status: true,
+      createdAt: true,
+      updatedAt: true,
     },
   })
 
   return result.docs?.[0] || null
-}
+})

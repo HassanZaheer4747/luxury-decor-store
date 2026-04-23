@@ -24,9 +24,12 @@ export function Luxury3DWrapper() {
   const [isLowPower, setIsLowPower] = useState(false)
 
   useEffect(() => {
-    const isMobile = window.innerWidth < 768 ||
-      /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
-    setIsLowPower(isMobile)
+    // Improved detection: skip 3D only on low-end mobile or if explicitly requested
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+    const isSmallScreen = window.innerWidth < 768
+    
+    // Only force low power if BOTH mobile AND small screen
+    setIsLowPower(isMobile && isSmallScreen)
   }, [])
 
   if (isLowPower) {

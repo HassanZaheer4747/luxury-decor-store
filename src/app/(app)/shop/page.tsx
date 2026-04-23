@@ -4,6 +4,8 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
 
+export const revalidate = 300
+
 export const metadata = {
   description: 'Search for products in the store.',
   title: 'Shop',

@@ -6,12 +6,12 @@ import * as THREE from 'three'
 
 function DustParticles() {
   const ref = useRef<THREE.Points>(null)
-  const count = 120
+  const count = 60 // Reduced for better baseline performance
 
   const positions = useMemo(() => {
     const arr = new Float32Array(count * 3)
     for (let i = 0; i < count; i++) {
-      arr[i * 3] = (Math.random() - 0.5) * 20
+      arr[i * 3] = (Math.random() - 0.5) * 25 // Wider spread
       arr[i * 3 + 1] = (Math.random() - 0.5) * 20
       arr[i * 3 + 2] = (Math.random() - 0.5) * 20
     }
@@ -20,8 +20,8 @@ function DustParticles() {
 
   useFrame((state) => {
     if (!ref.current) return
-    ref.current.rotation.y = state.clock.elapsedTime * 0.008
-    ref.current.rotation.x = state.clock.elapsedTime * 0.005
+    ref.current.rotation.y = state.clock.elapsedTime * 0.005 // Slower
+    ref.current.rotation.x = state.clock.elapsedTime * 0.003
   })
 
   return (
